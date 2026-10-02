@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kenzie's Site Analytics</title>
 <style>
 /* Layout: file bar, six KPI tiles, column mapping, then source and page breakdown tables */
@@ -15,6 +19,7 @@
   --good:#1a8f4c;
   --warn:#b8741a;
   --bar:#22318f;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s-other:#8a8f98;
   --display:"Fraunces","Georgia",serif;
   --body:"Inter","Segoe UI",system-ui,sans-serif;
 }
@@ -22,12 +27,14 @@
   :root:not([data-theme="light"]){
     --bg:#13152a; --surface:#1c1f3a; --sunken:#171a33; --ink:#eef0fb; --muted:#9aa0b8; --line:#2d3055;
     --bleu:#8b9bff; --rouge:#ff6b81; --on-bleu:#13152a; --good:#4ade80; --warn:#f0a94e; --bar:#8b9bff;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s-other:#7d8299;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#13152a; --surface:#1c1f3a; --sunken:#171a33; --ink:#eef0fb; --muted:#9aa0b8; --line:#2d3055;
   --bleu:#8b9bff; --rouge:#ff6b81; --on-bleu:#13152a; --good:#4ade80; --warn:#f0a94e; --bar:#8b9bff;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s-other:#7d8299;
   color-scheme:dark;
 }
 
@@ -137,6 +144,49 @@ tr.worst td.name::after{content:"Highest bounce";margin-left:8px;font-size:0.62r
 tr.top td.name::after{content:"Most visited";margin-left:8px;font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--bleu);}
 .empty-cell{color:var(--muted);text-align:left!important;}
 
+/* Charts */
+.charts{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;}
+.chart-panel header{flex-wrap:wrap;}
+.chart-panel header > div:first-child{display:flex;flex-direction:column;gap:2px;}
+.chart{position:relative;min-width:0;}
+.chart svg{display:block;width:100%;overflow:visible;}
+.chart svg:focus{outline:none;}
+.chart svg:focus-visible{outline:2px solid var(--bleu);outline-offset:4px;border-radius:4px;}
+.chart .grid line{stroke:var(--line);stroke-width:1;shape-rendering:crispEdges;}
+.chart .tick{fill:var(--muted);font-size:11px;font-family:var(--body);font-variant-numeric:tabular-nums;}
+.chart .lbl{fill:var(--ink);font-size:12px;font-family:var(--body);}
+.chart .val{fill:var(--ink);font-size:11.5px;font-weight:600;font-family:var(--body);font-variant-numeric:tabular-nums;}
+.chart .note{fill:var(--muted);font-size:11px;font-family:var(--body);}
+.chart .hair{stroke:var(--muted);stroke-width:1;}
+.chart .bar-row{cursor:default;outline:none;}
+.chart .bar-row .hit{fill:transparent;}
+.chart .bar-row:hover .bar,.chart .bar-row:focus .bar{filter:brightness(1.15) saturate(1.1);}
+.chart .bar-row:focus-visible .hit{stroke:var(--bleu);stroke-width:2;rx:4;}
+.chart-empty{color:var(--muted);font-size:0.88rem;margin:20px 0;}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:0.8rem;color:var(--muted);margin:0 0 8px;}
+.legend span{display:inline-flex;align-items:center;gap:6px;}
+.legend .lk{width:14px;height:2px;border-radius:1px;display:inline-block;}
+.legend .sw{width:10px;height:10px;border-radius:2px;display:inline-block;}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+.seg button{font:inherit;font-size:0.8rem;font-weight:600;padding:5px 12px;border:0;background:transparent;color:var(--muted);cursor:pointer;}
+.seg button + button{border-left:1px solid var(--line);}
+.seg button[aria-pressed="true"]{background:var(--bleu);color:var(--on-bleu);}
+.seg button:focus-visible{outline:2px solid var(--bleu);outline-offset:-2px;}
+details.data{margin-top:10px;font-size:0.84rem;}
+details.data summary{cursor:pointer;color:var(--bleu);font-weight:600;}
+details.data .scroll{margin-top:8px;}
+.tip{
+  position:fixed;z-index:20;pointer-events:none;background:var(--surface);color:var(--ink);
+  border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:0.8rem;
+  min-width:150px;max-width:280px;box-shadow:0 10px 28px -12px rgba(10,12,40,0.45);
+  display:flex;flex-direction:column;gap:4px;
+}
+.tip .t{color:var(--muted);font-size:0.72rem;font-weight:600;overflow-wrap:anywhere;}
+.tip .row{display:flex;align-items:center;gap:8px;}
+.tip .key{width:12px;height:2px;border-radius:1px;flex:none;}
+.tip .v{font-weight:700;font-variant-numeric:tabular-nums;}
+.tip .n{color:var(--muted);overflow-wrap:anywhere;}
+
 footer{text-align:center;color:var(--muted);font-size:0.78rem;}
 
 @media (max-width: 900px){
@@ -149,6 +199,8 @@ footer{text-align:center;color:var(--muted);font-size:0.78rem;}
 @media (prefers-reduced-motion: reduce){ .filebar{transition:none;} }
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+</head>
+<body>
 
 <div class="wrap">
   <header class="page">
@@ -183,6 +235,31 @@ footer{text-align:center;color:var(--muted);font-size:0.78rem;}
     <div class="map-grid" id="map-grid"></div>
   </details>
 
+  <section class="charts" id="charts" aria-label="Charts">
+    <div class="panel chart-panel">
+      <header>
+        <div><h2>Traffic over time</h2><small id="traffic-sub">Visits by date</small></div>
+        <div class="seg" id="traffic-mode" role="group" aria-label="Chart view">
+          <button type="button" data-mode="total" aria-pressed="true">Total</button>
+          <button type="button" data-mode="source" aria-pressed="false">By source</button>
+        </div>
+      </header>
+      <div class="legend" id="traffic-legend"></div>
+      <div class="chart" id="traffic-chart"></div>
+      <details class="data" id="traffic-data">
+        <summary>View as table</summary>
+        <div class="scroll"><table id="traffic-table"></table></div>
+      </details>
+    </div>
+    <div class="panel chart-panel">
+      <header>
+        <div><h2>Bounce rate by page</h2><small>Visit-weighted, highest first</small></div>
+      </header>
+      <div class="legend" id="bounce-legend"></div>
+      <div class="chart" id="bounce-chart"></div>
+    </div>
+  </section>
+
   <section class="tables" id="tables">
     <div class="panel">
       <header><h2>By traffic source</h2><small id="source-note"></small></header>
@@ -196,6 +273,7 @@ footer{text-align:center;color:var(--muted);font-size:0.78rem;}
 
   <footer>Files are read in your browser and never uploaded anywhere.</footer>
 </div>
+<div class="tip" id="tip" hidden></div>
 
 <script>
 const SAMPLE_NAME = "parc_claude_website_analytics.csv";
@@ -390,7 +468,7 @@ function compute(){
   const useConvRate = !useConvCount && has("convRate");
 
   let total = 0, conv = 0, convVisits = 0, bounceW = 0, bounceV = 0, timeW = 0, timeV = 0, skipped = 0;
-  const pages = new Map(), sources = new Map(), dates = [];
+  const pages = new Map(), sources = new Map(), dates = [], dateAgg = new Map();
 
   const bucket = (m, key) => {
     if (!m.has(key)) m.set(key, { key, visits: 0, conv: 0, convVisits: 0, bounceW: 0, bounceV: 0, timeW: 0, timeV: 0 });
@@ -424,7 +502,16 @@ function compute(){
     }
     if (has("date")){
       const dv = (r[col("date")] || "").trim();
-      if (dv) dates.push(dv);
+      if (dv){
+        dates.push(dv);
+        if (!dateAgg.has(dv)) dateAgg.set(dv, { total: 0, src: new Map() });
+        const a = dateAgg.get(dv);
+        a.total += v;
+        if (has("source")){
+          const sk = (r[col("source")] || "").trim() || "(no source)";
+          a.src.set(sk, (a.src.get(sk) || 0) + v);
+        }
+      }
     }
   }
 
@@ -467,7 +554,36 @@ function compute(){
     }
   }
 
+  let timeline = null;
+  if (dateAgg.size){
+    let keys = [...dateAgg.keys()];
+    const allDates = keys.every(k => isFinite(Date.parse(k)));
+    if (allDates) keys.sort((a, b) => Date.parse(a) - Date.parse(b));
+    const label = k => {
+      if (!allDates) return k;
+      const iso = /^\d{4}-\d{2}-\d{2}/.test(k);
+      return new Date(Date.parse(k)).toLocaleDateString(undefined, { day: "numeric", month: "short", ...(iso ? { timeZone: "UTC" } : {}) });
+    };
+    // Up to four named sources keep their own colour; the rest fold into "Other".
+    const top = sourceList.slice(0, 4).map(s => s.key);
+    const hasOther = sourceList.length > 4;
+    const series = top.map((name, slot) => ({
+      name, color: `var(--s${slot + 1})`,
+      values: keys.map(k => dateAgg.get(k).src.get(name) || 0)
+    }));
+    if (hasOther) series.push({
+      name: "Other", color: "var(--s-other)",
+      values: keys.map(k => {
+        let s = 0;
+        dateAgg.get(k).src.forEach((v, sk) => { if (!top.includes(sk)) s += v; });
+        return s;
+      })
+    });
+    timeline = { keys, labels: keys.map(label), total: keys.map(k => dateAgg.get(k).total), series };
+  }
+
   return {
+    timeline,
     total, conv, convVisits, hasConv,
     rate: convVisits ? conv / convVisits : NaN,
     avgTime: timeV ? timeW / timeV : NaN,
@@ -488,6 +604,8 @@ const needs = label => `Needs a <b>${label}</b> column. Pick one under Column ma
 function setResultsVisible(show){
   $("kpis").hidden = !show;
   $("tables").hidden = !show;
+  $("charts").hidden = !show;
+  if (!show) hideTip();
   $("ready").hidden = show;
   $("calculate").hidden = show;
   $("upload-label").classList.toggle("ghost", !show);
@@ -565,6 +683,8 @@ function render(){
 
   renderSourceTable(m);
   renderPageTable(m);
+  lastMetrics = m;
+  renderCharts();
 }
 
 function shareCell(share, max){
@@ -612,6 +732,291 @@ function renderPageTable(m){
     </tr>`;
   }).join("")}</tbody>`;
 }
+
+/* ---------- Charts ---------- */
+let lastMetrics = null;
+let trafficMode = "total";
+const SVGNS = "http://www.w3.org/2000/svg";
+
+function niceStep(raw){
+  if (!(raw > 0)) return 1;
+  const p = 10 ** Math.floor(Math.log10(raw));
+  const n = raw / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+}
+function compact(n){
+  if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(n % 1e6 ? 1 : 0) + "M";
+  if (Math.abs(n) >= 1e4) return (n / 1e3).toFixed(n % 1e3 ? 1 : 0) + "K";
+  return Math.round(n).toLocaleString();
+}
+
+function showTip(title, rows, clientX, clientY){
+  const tip = $("tip");
+  tip.replaceChildren();
+  const t = document.createElement("div");
+  t.className = "t";
+  t.textContent = title;
+  tip.appendChild(t);
+  for (const r of rows){
+    const row = document.createElement("div");
+    row.className = "row";
+    if (r.color){
+      const k = document.createElement("span");
+      k.className = "key";
+      k.style.background = r.color;
+      row.appendChild(k);
+    }
+    const v = document.createElement("span");
+    v.className = "v";
+    v.textContent = r.value;
+    const n = document.createElement("span");
+    n.className = "n";
+    n.textContent = r.name;
+    row.append(v, n);
+    tip.appendChild(row);
+  }
+  tip.hidden = false;
+  const pad = 12, w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = clientX + 14, y = clientY - h - 12;
+  if (x + w > innerWidth - pad) x = clientX - w - 14;
+  if (x < pad) x = pad;
+  if (y < pad) y = clientY + 18;
+  if (y + h > innerHeight - pad) y = innerHeight - h - pad;
+  tip.style.left = x + "px";
+  tip.style.top = y + "px";
+}
+const hideTip = () => { $("tip").hidden = true; };
+
+function renderTraffic(m){
+  const box = $("traffic-chart"), legend = $("traffic-legend"), seg = $("traffic-mode");
+  const tl = m.timeline;
+  if (!tl){
+    seg.hidden = true;
+    legend.replaceChildren();
+    $("traffic-data").hidden = true;
+    box.innerHTML = `<p class="chart-empty">Needs a <b>date</b> column. Pick one under Column matching.</p>`;
+    return;
+  }
+  $("traffic-data").hidden = false;
+  const canSplit = tl.series.length > 1;
+  seg.hidden = !canSplit;
+  const mode = canSplit ? trafficMode : "total";
+  seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+
+  const lines = mode === "total"
+    ? [{ name: "All visits", color: "var(--bleu)", values: tl.total }]
+    : tl.series;
+  const n = tl.keys.length;
+  $("traffic-sub").textContent = `${mode === "total" ? "All visits" : "Visits by traffic source"} · ${n} date${n === 1 ? "" : "s"}`;
+
+  legend.replaceChildren();
+  if (lines.length > 1){
+    for (const l of lines){
+      const s = document.createElement("span");
+      const k = document.createElement("i");
+      k.className = "lk";
+      k.style.background = l.color;
+      s.append(k, document.createTextNode(l.name));
+      legend.appendChild(s);
+    }
+  }
+
+  const W = Math.max(280, box.clientWidth || 600), H = 260;
+  const ml = 48, mt = 16, mb = 28;
+  const ph = H - mt - mb;
+  const max = Math.max(1, ...lines.flatMap(l => l.values));
+  const step = niceStep(max / 4);
+  const top = Math.ceil(max / step) * step;
+  const y = v => mt + ph - (v / top) * ph;
+  // End labels only when every line end has room; otherwise the legend and tooltip carry identity.
+  const ends = lines.map(l => ({ name: l.name, y: y(l.values[n - 1]) })).sort((a, b) => a.y - b.y);
+  const endLabels = lines.length > 1 && lines.length <= 4 && ends.every((e, i) => i === 0 || e.y - ends[i - 1].y >= 13);
+  const mr = endLabels ? Math.min(110, Math.max(...lines.map(l => l.name.length)) * 7 + 18) : 24;
+  const pw = W - ml - mr;
+  const x = i => n === 1 ? ml + pw / 2 : ml + (i * pw) / (n - 1);
+
+  let svg = `<svg xmlns="${SVGNS}" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" tabindex="0" role="img" aria-label="Line chart of ${esc(lines.length > 1 ? "visits by traffic source" : "total visits")} over ${n} dates. Use the left and right arrow keys to read each date.">`;
+  svg += `<g class="grid">`;
+  for (let t = 0; t <= top + step / 1000; t += step){
+    svg += `<line x1="${ml}" x2="${W - mr}" y1="${y(t)}" y2="${y(t)}"/>`;
+    svg += `<text class="tick" x="${ml - 8}" y="${y(t) + 4}" text-anchor="end">${compact(t)}</text>`;
+  }
+  svg += `</g>`;
+
+  const maxLabels = Math.max(2, Math.floor(pw / 64));
+  const every = Math.max(1, Math.ceil(n / maxLabels));
+  for (let i = 0; i < n; i++){
+    const last = i === n - 1;
+    if (i % every !== 0 && !(last && (n - 1) % every >= every / 2)) continue;
+    svg += `<text class="tick" x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(tl.labels[i])}</text>`;
+  }
+
+  const showDots = n <= 16;
+  for (const l of lines){
+    const pts = l.values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
+    if (lines.length === 1 && n > 1){
+      svg += `<path d="M${pts.join("L")}L${x(n - 1)},${y(0)}L${x(0)},${y(0)}Z" fill="${l.color}" fill-opacity="0.1"/>`;
+    }
+    if (n > 1) svg += `<path d="M${pts.join("L")}" fill="none" stroke="${l.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    l.values.forEach((v, i) => {
+      if (showDots || i === n - 1) svg += `<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="${l.color}" stroke="var(--surface)" stroke-width="2"/>`;
+    });
+  }
+
+  if (lines.length === 1){
+    const v = lines[0].values[n - 1];
+    svg += `<text class="val" x="${x(n - 1) - 8}" y="${y(v) - 10}" text-anchor="end">${fmtInt(v)}</text>`;
+  } else if (endLabels){
+    for (const e of ends) svg += `<text class="lbl" x="${x(n - 1) + 10}" y="${e.y + 4}">${esc(e.name)}</text>`;
+  }
+
+  svg += `<line class="hair" id="traffic-hair" x1="0" x2="0" y1="${mt}" y2="${mt + ph}" visibility="hidden"/>`;
+  svg += `<g id="traffic-hl"></g>`;
+  svg += `<rect id="traffic-hit" x="${ml - 12}" y="${mt}" width="${pw + 24}" height="${ph}" fill="transparent"/>`;
+  svg += `</svg>`;
+  box.innerHTML = svg;
+
+  const el = box.querySelector("svg"), hair = el.querySelector("#traffic-hair"), hl = el.querySelector("#traffic-hl");
+  let cur = -1;
+  const show = (i, cx, cy) => {
+    cur = i;
+    hair.setAttribute("x1", x(i)); hair.setAttribute("x2", x(i));
+    hair.setAttribute("visibility", "visible");
+    hl.innerHTML = lines.map(l => `<circle cx="${x(i)}" cy="${y(l.values[i])}" r="5" fill="${l.color}" stroke="var(--surface)" stroke-width="2"/>`).join("");
+    const rows = [...lines].sort((a, b) => b.values[i] - a.values[i])
+      .map(l => ({ color: l.color, value: fmtInt(l.values[i]), name: l.name }));
+    if (lines.length > 1) rows.push({ value: fmtInt(tl.total[i]), name: "Total" });
+    showTip(tl.labels[i], rows, cx, cy);
+  };
+  const clearHl = () => { cur = -1; hair.setAttribute("visibility", "hidden"); hl.innerHTML = ""; hideTip(); };
+  const nearest = clientX => {
+    const r = el.getBoundingClientRect();
+    const px = (clientX - r.left) * (W / r.width);
+    return n === 1 ? 0 : Math.max(0, Math.min(n - 1, Math.round(((px - ml) / pw) * (n - 1))));
+  };
+  const onPoint = e => show(nearest(e.clientX), e.clientX, e.clientY);
+  el.addEventListener("pointermove", onPoint);
+  el.addEventListener("pointerdown", onPoint);
+  el.addEventListener("pointerleave", clearHl);
+  const keyShow = i => {
+    const r = el.getBoundingClientRect(), s = r.width / W;
+    show(i, r.left + x(i) * s, r.top + y(Math.max(...lines.map(l => l.values[i]))) * s);
+  };
+  el.addEventListener("focus", () => keyShow(n - 1));
+  el.addEventListener("blur", clearHl);
+  el.addEventListener("keydown", e => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    e.preventDefault();
+    let i = cur < 0 ? n - 1 : cur;
+    if (e.key === "ArrowLeft") i = Math.max(0, i - 1);
+    if (e.key === "ArrowRight") i = Math.min(n - 1, i + 1);
+    if (e.key === "Home") i = 0;
+    if (e.key === "End") i = n - 1;
+    keyShow(i);
+  });
+
+  const t = $("traffic-table");
+  const cols = tl.series.length > 1 ? tl.series : [];
+  t.innerHTML = `<thead><tr><th>Date</th><th>Total</th>${cols.map(s => `<th>${esc(s.name)}</th>`).join("")}</tr></thead>
+    <tbody>${tl.keys.map((k, i) => `<tr><td class="name">${esc(tl.labels[i])}</td><td>${fmtInt(tl.total[i])}</td>${cols.map(s => `<td>${fmtInt(s.values[i])}</td>`).join("")}</tr>`).join("")}</tbody>`;
+}
+
+function renderBounce(m){
+  const box = $("bounce-chart"), legend = $("bounce-legend");
+  const pages = m.pageList.filter(p => isFinite(p.bounce)).sort((a, b) => b.bounce - a.bounce);
+  if (!pages.length){
+    legend.replaceChildren();
+    box.innerHTML = `<p class="chart-empty">Needs a <b>${state.map.page < 0 ? "page" : "bounce rate"}</b> column. Pick one under Column matching.</p>`;
+    return;
+  }
+  const avg = m.overallBounce;
+  legend.innerHTML = `<span><i class="sw" style="background:var(--rouge)"></i>Above site average</span>
+    <span><i class="sw" style="background:var(--bleu)"></i>At or below</span>
+    <span><i class="lk" style="background:var(--ink);width:2px;height:12px"></i>Site average ${fmtPct(avg)}</span>`;
+
+  const W = Math.max(280, box.clientWidth || 500);
+  const rowH = 38, mt = 20, mb = 24, ml = 0, mr = 52;
+  const H = mt + pages.length * rowH + mb;
+  const pw = W - ml - mr;
+  const maxB = Math.max(...pages.map(p => p.bounce), avg || 0);
+  const step = maxB > 0.5 ? 0.2 : maxB > 0.2 ? 0.1 : 0.05;
+  const top = Math.min(1, Math.max(step, Math.ceil(maxB / step - 1e-9) * step));
+  const x = v => ml + (v / top) * pw;
+  const maxChars = Math.floor(W / 6.6);
+  const clip = s => s.length > maxChars ? s.slice(0, maxChars - 1) + "…" : s;
+
+  let svg = `<svg xmlns="${SVGNS}" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="group" aria-label="Bar chart of bounce rate by page, highest first">`;
+  svg += `<g class="grid">`;
+  for (let t = 0; t <= top + 1e-9; t += step){
+    svg += `<line x1="${x(t)}" x2="${x(t)}" y1="${mt - 4}" y2="${H - mb}"/>`;
+    svg += `<text class="tick" x="${x(t)}" y="${H - 6}" text-anchor="${t === 0 ? "start" : "middle"}">${Math.round(t * 100)}%</text>`;
+  }
+  svg += `</g>`;
+
+  pages.forEach((p, i) => {
+    const yRow = mt + i * rowH;
+    const barY = yRow + 19, barH = 12;
+    const w = Math.max(1, x(p.bounce) - ml);
+    const r = Math.min(4, w);
+    const color = p.bounce > avg ? "var(--rouge)" : "var(--bleu)";
+    svg += `<g class="bar-row" tabindex="0" data-i="${i}" role="img" aria-label="${esc(p.key)}: ${fmtPct(p.bounce)} bounce rate, ${fmtInt(p.visits)} visits">`;
+    svg += `<rect class="hit" x="${ml}" y="${yRow + 1}" width="${W - ml}" height="${rowH - 2}"/>`;
+    svg += `<text class="lbl" x="${ml}" y="${yRow + 13}">${esc(clip(p.key))}</text>`;
+    svg += `<path class="bar" fill="${color}" d="M${ml},${barY}H${ml + w - r}Q${ml + w},${barY} ${ml + w},${barY + r}V${barY + barH - r}Q${ml + w},${barY + barH} ${ml + w - r},${barY + barH}H${ml}Z"/>`;
+    svg += `<text class="val" x="${ml + w + 6}" y="${barY + 10}">${fmtPct(p.bounce)}</text>`;
+    svg += `</g>`;
+  });
+
+  if (isFinite(avg)){
+    const ax = x(avg);
+    const anchorEnd = ax > W * 0.6;
+    svg += `<line x1="${ax}" x2="${ax}" y1="${mt - 6}" y2="${H - mb}" stroke="var(--ink)" stroke-width="1.5" opacity="0.7"/>`;
+    svg += `<text class="note" x="${ax + (anchorEnd ? -5 : 5)}" y="${mt - 8}" text-anchor="${anchorEnd ? "end" : "start"}">Site average ${fmtPct(avg)}</text>`;
+  }
+  svg += `</svg>`;
+  box.innerHTML = svg;
+
+  box.querySelectorAll(".bar-row").forEach(g => {
+    const p = pages[Number(g.dataset.i)];
+    const rows = [
+      { value: fmtPct(p.bounce), name: "bounce rate" },
+      { value: fmtInt(p.visits), name: `visits (${fmtPct(p.share)} of traffic)` },
+      { value: `${p.bounce > avg ? "+" : ""}${((p.bounce - avg) * 100).toFixed(1)} pts`, name: "vs site average" }
+    ];
+    g.addEventListener("pointermove", e => showTip(p.key, rows, e.clientX, e.clientY));
+    g.addEventListener("pointerdown", e => showTip(p.key, rows, e.clientX, e.clientY));
+    g.addEventListener("pointerleave", hideTip);
+    g.addEventListener("focus", () => {
+      const r = g.getBoundingClientRect();
+      showTip(p.key, rows, r.left + Math.min(r.width - 40, x(p.bounce) * (r.width / W)), r.top + 10);
+    });
+    g.addEventListener("blur", hideTip);
+  });
+}
+
+function renderCharts(){
+  if (!lastMetrics || !state.calculated) return;
+  hideTip();
+  renderTraffic(lastMetrics);
+  renderBounce(lastMetrics);
+}
+
+$("traffic-mode").addEventListener("click", e => {
+  const b = e.target.closest("button[data-mode]");
+  if (!b) return;
+  trafficMode = b.dataset.mode;
+  renderTraffic(lastMetrics);
+});
+
+let resizeFrame = 0, lastWidth = 0;
+new ResizeObserver(entries => {
+  const w = Math.round(entries[0].contentRect.width);
+  if (w === lastWidth) return;
+  lastWidth = w;
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame = requestAnimationFrame(renderCharts);
+}).observe($("charts"));
+window.addEventListener("scroll", hideTip, { passive: true });
 
 function renderMapping(){
   const opts = `<option value="-1">— Not in this file —</option>` +
@@ -693,8 +1098,5 @@ window.addEventListener("drop", e => e.preventDefault());
 
 load(SAMPLE_CSV, SAMPLE_NAME, true);
 </script>
-
-</body></html>
-</script>
-
-</body></html>
+</body>
+</html>
