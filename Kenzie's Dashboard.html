@@ -1,0 +1,535 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kenzie's Dashboard</title>
+<style>
+/* Layout: summary bar with launch progress, then a toolbar, then a filterable grid of page cards */
+:root{
+  --bg:#f5f6fa;
+  --surface:#ffffff;
+  --ink:#1b1f3b;
+  --muted:#6b7280;
+  --line:#e2e4ee;
+  --bleu:#22318f;
+  --rouge:#c8102e;
+  --on-bleu:#ffffff;
+  --live:#1a8f4c;
+  --draft:#8a8f98;
+  --review:#c9862a;
+  --blocked:#c8102e;
+  --track:#e8eaf3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#13152a; --surface:#1c1f3a; --ink:#eef0fb; --muted:#9aa0b8; --line:#2d3055;
+    --bleu:#8b9bff; --rouge:#ff6b81; --on-bleu:#13152a;
+    --live:#4ade80; --draft:#a8adc4; --review:#f0a94e; --blocked:#ff6b81; --track:#2a2d50;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#13152a; --surface:#1c1f3a; --ink:#eef0fb; --muted:#9aa0b8; --line:#2d3055;
+  --bleu:#8b9bff; --rouge:#ff6b81; --on-bleu:#13152a;
+  --live:#4ade80; --draft:#a8adc4; --review:#f0a94e; --blocked:#ff6b81; --track:#2a2d50;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Inter","Segoe UI",system-ui,sans-serif;
+  padding:0 16px;
+}
+.wrap{max-width:1180px;margin:0 auto;padding-block:32px 48px;}
+
+header.page{
+  padding-bottom:20px;
+  margin-bottom:24px;
+  position:relative;
+}
+header.page::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:4px;
+  border-radius:2px;
+  background:linear-gradient(90deg,var(--bleu) 0 33.3%, var(--line) 33.3% 66.6%, var(--rouge) 66.6% 100%);
+}
+h1{
+  font-family:"Fraunces","Georgia",serif;
+  font-size:clamp(1.7rem,3.5vw,2.5rem);
+  margin:0 0 4px;
+  letter-spacing:-0.01em;
+  text-wrap:balance;
+}
+.subtitle{color:var(--muted);font-size:0.95rem;margin:0;}
+.eyebrow{
+  font-size:0.72rem;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--rouge);
+  font-weight:700;
+  margin:0 0 6px;
+}
+
+/* Summary bar */
+.summary-bar{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:18px 20px;
+  margin-bottom:20px;
+  display:grid;
+  grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+  gap:24px;
+  align-items:center;
+}
+.counts{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 26px;
+}
+.count{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  background:none;
+  border:0;
+  padding:0;
+  color:inherit;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+  border-radius:6px;
+}
+.count:focus-visible{outline:2px solid var(--bleu);outline-offset:4px;}
+.count .n{
+  font-family:"Fraunces",serif;
+  font-size:1.8rem;
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.count .l{
+  display:flex;align-items:center;gap:6px;
+  color:var(--muted);
+  font-size:0.72rem;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  font-weight:600;
+}
+.count .l i{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.count.total{cursor:default;}
+.count.live .n{color:var(--live)}   .count.live i{background:var(--live)}
+.count.draft .n{color:var(--draft)} .count.draft i{background:var(--draft)}
+.count.review .n{color:var(--review)} .count.review i{background:var(--review)}
+.count.blocked .n{color:var(--blocked)} .count.blocked i{background:var(--blocked)}
+.count[aria-pressed="true"] .l{color:var(--ink);text-decoration:underline;text-underline-offset:3px;}
+
+.progress-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  margin-bottom:8px;
+}
+.progress-head .label{font-size:0.82rem;font-weight:600;}
+.progress-head .pct{
+  font-family:"Fraunces",serif;
+  font-size:1.6rem;
+  color:var(--bleu);
+  font-variant-numeric:tabular-nums;
+  line-height:1;
+}
+.bar{
+  display:flex;
+  height:12px;
+  border-radius:999px;
+  overflow:hidden;
+  background:var(--track);
+  gap:2px;
+}
+.bar span{display:block;height:100%;transition:width .4s ease;}
+.bar .live{background:var(--live)}
+.bar .review{background:var(--review)}
+.bar .draft{background:var(--draft)}
+.bar .blocked{background:var(--blocked)}
+.progress-note{font-size:0.78rem;color:var(--muted);margin:8px 0 0;}
+
+/* Toolbar */
+.toolbar{
+  display:grid;
+  grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:12px;
+}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.field label{
+  font-size:0.7rem;
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.field input,.field select{
+  width:100%;
+  font:inherit;
+  font-size:0.9rem;
+  color:var(--ink);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:9px 12px;
+}
+.field input:focus,.field select:focus{outline:2px solid var(--bleu);outline-offset:0;border-color:var(--bleu);}
+.search-wrap{position:relative;}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none;}
+.search-wrap input{padding-left:34px;}
+
+.results{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  font-size:0.85rem;
+  color:var(--muted);
+  margin-bottom:16px;
+  min-height:28px;
+}
+.results strong{color:var(--ink);font-variant-numeric:tabular-nums;}
+.clear-btn{
+  font:inherit;
+  font-size:0.82rem;
+  font-weight:600;
+  color:var(--bleu);
+  background:none;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:4px 12px;
+  cursor:pointer;
+}
+.clear-btn:hover{border-color:var(--bleu);}
+.clear-btn:focus-visible{outline:2px solid var(--bleu);outline-offset:2px;}
+
+/* Cards */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:16px;
+}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:18px 18px 16px 22px;
+  position:relative;
+  overflow:hidden;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.card:hover{transform:translateY(-2px); box-shadow:0 8px 22px -12px rgba(20,23,60,0.35);}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;}
+.card.status-live::before{background:var(--live)}
+.card.status-draft::before{background:var(--draft)}
+.card.status-review::before{background:var(--review)}
+.card.status-blocked::before{background:var(--blocked)}
+
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.section-tag{
+  font-size:0.7rem;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--bleu);
+  font-weight:700;
+}
+.page-name{
+  font-family:"Fraunces",serif;
+  font-size:1.15rem;
+  margin:2px 0 0;
+  text-wrap:balance;
+}
+mark{background:color-mix(in srgb, var(--review) 30%, transparent);color:inherit;border-radius:2px;padding:0 1px;}
+
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:0.72rem;
+  font-weight:700;
+  white-space:nowrap;
+  letter-spacing:0.02em;
+  background:transparent;
+}
+.status-pill::before{content:"";width:7px;height:7px;border-radius:50%;flex:none;}
+.status-pill.status-live{color:var(--live); background:color-mix(in srgb, var(--live) 16%, transparent);}
+.status-pill.status-live::before{background:var(--live)}
+.status-pill.status-draft{color:var(--draft); background:color-mix(in srgb, var(--draft) 18%, transparent);}
+.status-pill.status-draft::before{background:var(--draft)}
+.status-pill.status-review{color:var(--review); background:color-mix(in srgb, var(--review) 18%, transparent);}
+.status-pill.status-review::before{background:var(--review)}
+.status-pill.status-blocked{color:var(--blocked); background:color-mix(in srgb, var(--blocked) 16%, transparent);}
+.status-pill.status-blocked::before{background:var(--blocked)}
+
+.meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  font-size:0.82rem;
+  color:var(--muted);
+  border-top:1px solid var(--line);
+  padding-top:10px;
+  margin-top:auto;
+}
+.owner{display:flex;align-items:center;gap:7px;color:var(--ink);font-weight:600;min-width:0;}
+.avatar{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--bleu);
+  color:var(--on-bleu);
+  font-size:0.68rem;
+  font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex:none;
+}
+.updated{font-variant-numeric:tabular-nums;white-space:nowrap;}
+
+.empty{
+  text-align:center;
+  color:var(--muted);
+  padding:60px 20px;
+  border:1px dashed var(--line);
+  border-radius:12px;
+}
+
+footer{
+  text-align:center;
+  color:var(--muted);
+  font-size:0.78rem;
+  margin-top:36px;
+}
+
+@media (max-width: 860px){
+  .summary-bar{grid-template-columns:1fr;}
+  .toolbar{grid-template-columns:1fr 1fr;}
+  .toolbar .field.search{grid-column:1 / -1;}
+}
+@media (max-width: 480px){
+  .toolbar{grid-template-columns:1fr;}
+  .counts{gap:14px 20px;}
+}
+@media (prefers-reduced-motion: reduce){
+  .card,.bar span{transition:none;}
+  .card:hover{transform:none;}
+}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+
+<div class="wrap">
+  <header class="page">
+    <p class="eyebrow">Parc Claude &middot; Site Content</p>
+    <h1>Kenzie's Dashboard</h1>
+    <p class="subtitle">Content status across the park website</p>
+  </header>
+
+  <section class="summary-bar" aria-label="Summary">
+    <div class="counts" id="counts"></div>
+    <div>
+      <div class="progress-head">
+        <span class="label">Launch ready</span>
+        <span class="pct" id="pct">0%</span>
+      </div>
+      <div class="bar" id="bar" role="img"></div>
+      <p class="progress-note" id="progress-note"></p>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="field search">
+      <label for="search">Search</label>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" id="search" placeholder="Page name, owner or section" autocomplete="off">
+      </div>
+    </div>
+    <div class="field">
+      <label for="status-filter">Status</label>
+      <select id="status-filter"></select>
+    </div>
+    <div class="field">
+      <label for="section-filter">Section</label>
+      <select id="section-filter"></select>
+    </div>
+    <div class="field">
+      <label for="sort">Sort by last updated</label>
+      <select id="sort">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="results">
+    <span id="results-count"></span>
+    <button type="button" class="clear-btn" id="clear" hidden>Clear filters</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>No pages match your search and filters.</div>
+
+  <footer>Parc Claude &bull; Content Operations</footer>
+</div>
+
+<script>
+const PAGES = [
+  { name: "Homepage", section: "Visit Us", status: "live", owner: "Marie Dubois", updated: "2026-09-18" },
+  { name: "Le Dragon Vertigo", section: "Attractions", status: "live", owner: "Théo Laurent", updated: "2026-09-21" },
+  { name: "Carousel Royal", section: "Attractions", status: "review", owner: "Théo Laurent", updated: "2026-08-30" },
+  { name: "Splash Cascade", section: "Attractions", status: "draft", owner: "Amélie Rousseau", updated: "2026-09-05" },
+  { name: "Single-Day Tickets", section: "Tickets", status: "live", owner: "Julien Faure", updated: "2026-09-24" },
+  { name: "Annual Pass", section: "Tickets", status: "review", owner: "Julien Faure", updated: "2026-09-10" },
+  { name: "Group Bookings", section: "Tickets", status: "blocked", owner: "Camille Girard", updated: "2026-08-12" },
+  { name: "Café du Parc", section: "Food & Drink", status: "live", owner: "Nadia Bertrand", updated: "2026-09-15" },
+  { name: "Crêperie Étoile", section: "Food & Drink", status: "draft", owner: "Nadia Bertrand", updated: "2026-09-02" },
+  { name: "Park Hours & Map", section: "Visit Us", status: "live", owner: "Marie Dubois", updated: "2026-09-27" },
+  { name: "Hotel Partners", section: "Visit Us", status: "blocked", owner: "Olivier Mercier", updated: "2026-07-29" },
+  { name: "Accessibility Guide", section: "Visit Us", status: "review", owner: "Amélie Rousseau", updated: "2026-09-08" }
+];
+
+const STATUSES = [
+  { key: "live",    label: "Live" },
+  { key: "review",  label: "Needs Review" },
+  { key: "draft",   label: "Draft" },
+  { key: "blocked", label: "Blocked" }
+];
+const STATUS_LABEL = Object.fromEntries(STATUSES.map(s => [s.key, s.label]));
+const SECTIONS = [...new Set(PAGES.map(p => p.section))].sort();
+
+const state = { query: "", status: "all", section: "all", sort: "newest" };
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const fold = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+function highlight(text){
+  const q = state.query.trim();
+  if (!q) return esc(text);
+  const i = fold(text).indexOf(fold(q));
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + q.length)) + "</mark>" + esc(text.slice(i + q.length));
+}
+function initials(name){
+  return name.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
+}
+function formatDate(iso){
+  return new Date(iso + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function renderSummary(){
+  const counts = Object.fromEntries(STATUSES.map(s => [s.key, 0]));
+  PAGES.forEach(p => counts[p.status]++);
+  const total = PAGES.length;
+
+  $("counts").innerHTML =
+    `<div class="count total"><span class="n">${total}</span><span class="l">Total pages</span></div>` +
+    STATUSES.map(s =>
+      `<button type="button" class="count ${s.key}" data-status="${s.key}" aria-pressed="${state.status === s.key}" title="Show only ${s.label.toLowerCase()} pages">
+        <span class="n">${counts[s.key]}</span><span class="l"><i></i>${s.label}</span>
+      </button>`
+    ).join("");
+
+  $("counts").querySelectorAll("button.count").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.status = state.status === btn.dataset.status ? "all" : btn.dataset.status;
+      $("status-filter").value = state.status;
+      update();
+    });
+  });
+
+  const pct = Math.round((counts.live / total) * 100);
+  $("pct").textContent = pct + "%";
+  $("bar").innerHTML = STATUSES
+    .filter(s => counts[s.key] > 0)
+    .map(s => `<span class="${s.key}" style="width:${(counts[s.key] / total) * 100}%" title="${s.label}: ${counts[s.key]}"></span>`)
+    .join("");
+  $("bar").setAttribute("aria-label", `${counts.live} of ${total} pages live, ${pct}% launch ready`);
+  $("progress-note").textContent =
+    `${counts.live} of ${total} pages live · ${counts.review} awaiting review · ${counts.blocked} blocked`;
+}
+
+function renderFilters(){
+  $("status-filter").innerHTML = `<option value="all">All statuses</option>` +
+    STATUSES.map(s => `<option value="${s.key}">${s.label}</option>`).join("");
+  $("section-filter").innerHTML = `<option value="all">All sections</option>` +
+    SECTIONS.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join("");
+}
+
+function filtered(){
+  const q = fold(state.query.trim());
+  return PAGES
+    .filter(p => state.status === "all" || p.status === state.status)
+    .filter(p => state.section === "all" || p.section === state.section)
+    .filter(p => !q || [p.name, p.owner, p.section].some(f => fold(f).includes(q)))
+    .sort((a, b) => state.sort === "newest"
+      ? b.updated.localeCompare(a.updated)
+      : a.updated.localeCompare(b.updated));
+}
+
+function renderGrid(){
+  const items = filtered();
+  const active = state.query.trim() || state.status !== "all" || state.section !== "all";
+
+  $("results-count").innerHTML = `Showing <strong>${items.length}</strong> of <strong>${PAGES.length}</strong> pages`;
+  $("clear").hidden = !active;
+  $("empty").hidden = items.length > 0;
+  $("grid").hidden = items.length === 0;
+
+  $("grid").innerHTML = items.map(p => `
+    <article class="card status-${p.status}">
+      <div class="card-top">
+        <div>
+          <div class="section-tag">${highlight(p.section)}</div>
+          <h2 class="page-name">${highlight(p.name)}</h2>
+        </div>
+        <span class="status-pill status-${p.status}">${STATUS_LABEL[p.status]}</span>
+      </div>
+      <div class="meta">
+        <div class="owner">
+          <span class="avatar" aria-hidden="true">${initials(p.owner)}</span>
+          <span>${highlight(p.owner)}</span>
+        </div>
+        <time class="updated" datetime="${p.updated}">${formatDate(p.updated)}</time>
+      </div>
+    </article>
+  `).join("");
+}
+
+function update(){
+  $("counts").querySelectorAll("button.count").forEach(b =>
+    b.setAttribute("aria-pressed", String(state.status === b.dataset.status)));
+  renderGrid();
+}
+
+$("search").addEventListener("input", e => { state.query = e.target.value; update(); });
+$("status-filter").addEventListener("change", e => { state.status = e.target.value; update(); });
+$("section-filter").addEventListener("change", e => { state.section = e.target.value; update(); });
+$("sort").addEventListener("change", e => { state.sort = e.target.value; update(); });
+$("clear").addEventListener("click", () => {
+  Object.assign(state, { query: "", status: "all", section: "all" });
+  $("search").value = "";
+  $("status-filter").value = "all";
+  $("section-filter").value = "all";
+  update();
+  $("search").focus();
+});
+
+renderFilters();
+renderSummary();
+update();
+</script>
+
+</body></html>
